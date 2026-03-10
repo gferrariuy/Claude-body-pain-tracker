@@ -3,26 +3,31 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import BodyMap from "@/components/BodyMap/BodyMap";
 import PainFormDialog from "@/components/PainFormDialog";
 import ActivityFormDialog from "@/components/ActivityFormDialog";
+import MedicationFormDialog from "@/components/MedicationFormDialog";
 import PainRecordCard from "@/components/PainRecordCard";
 import ActivityCard from "@/components/ActivityCard";
+import MedicationCard from "@/components/MedicationCard";
 import {
   PainRecord,
   Activity,
+  Medication,
   PainType,
   ActivityType,
+  MedicationType,
 } from "@/lib/types";
 import {
   getTodayPainRecords,
   getTodayActivities,
+  getTodayMedications,
   savePainRecord,
   saveActivity,
+  saveMedication,
 } from "@/lib/storage";
 import { formatDate, getTodayISO } from "@/lib/utils";
-import { Activity as ActivityIcon, AlertCircle, Plus } from "lucide-react";
+import { Activity as ActivityIcon, AlertCircle, Pill, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 interface PendingPain {
@@ -34,13 +39,16 @@ interface PendingPain {
 export default function RegistroPage() {
   const [painRecords, setPainRecords] = useState<PainRecord[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [medications, setMedications] = useState<Medication[]>([]);
   const [pendingPain, setPendingPain] = useState<PendingPain | null>(null);
   const [activityDialogOpen, setActivityDialogOpen] = useState(false);
+  const [medicationDialogOpen, setMedicationDialogOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   function refresh() {
     setPainRecords(getTodayPainRecords());
     setActivities(getTodayActivities());
+    setMedications(getTodayMedications());
   }
 
   useEffect(() => {
@@ -74,12 +82,20 @@ export default function RegistroPage() {
     durationMinutes?: number;
     notes?: string;
   }) {
-    saveActivity({
-      date: getTodayISO(),
-      ...data,
-    });
+    saveActivity({ date: getTodayISO(), ...data });
     toast.success("Actividad registrada");
     setActivityDialogOpen(false);
+    refresh();
+  }
+
+  function handleMedicationSubmit(data: {
+    medicationType: MedicationType;
+    quantity: number;
+    notes?: string;
+  }) {
+    saveMedication({ date: getTodayISO(), ...data });
+    toast.success("Medicamento registrado");
+    setMedicationDialogOpen(false);
     refresh();
   }
 
@@ -114,11 +130,9 @@ export default function RegistroPage() {
           {/* Pain records */}
           <Card>
             <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                  Dolores de hoy ({painRecords.length})
-                </CardTitle>
-              </div>
+              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                Dolores de hoy ({painRecords.length})
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               {painRecords.length === 0 ? (
@@ -166,6 +180,38 @@ export default function RegistroPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Medications */}
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                  Medicamentos de hoy ({medications.length})
+                </CardTitle>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setMedicationDialogOpen(true)}
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1" />
+                  Medicamento
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {medications.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No has registrado medicamentos hoy
+                </p>
+              ) : (
+                medications
+                  .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+                  .map((m) => (
+                    <MedicationCard key={m.id} medication={m} onUpdate={refresh} />
+                  ))
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
 
@@ -186,6 +232,13 @@ export default function RegistroPage() {
         open={activityDialogOpen}
         onOpenChange={setActivityDialogOpen}
         onSubmit={handleActivitySubmit}
+      />
+
+      {/* Medication form dialog */}
+      <MedicationFormDialog
+        open={medicationDialogOpen}
+        onOpenChange={setMedicationDialogOpen}
+        onSubmit={handleMedicationSubmit}
       />
     </div>
   );

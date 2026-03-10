@@ -1,6 +1,6 @@
 "use client";
 
-import { PainRecord, Activity } from "./types";
+import { PainRecord, Activity, Medication } from "./types";
 import { generateId, getTodayISO } from "./utils";
 
 const PAIN_RECORDS_KEY = "pain-tracker:pain-records";
@@ -106,6 +106,59 @@ export function getActivitiesByDate(date: string): Activity[] {
 
 export function getTodayActivities(): Activity[] {
   return getActivitiesByDate(getTodayISO());
+}
+
+// ── Medications ───────────────────────────────────────────────────────────────
+
+const MEDICATIONS_KEY = "pain-tracker:medications";
+
+export function getMedications(): Medication[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const data = localStorage.getItem(MEDICATIONS_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveMedication(
+  medication: Omit<Medication, "id" | "createdAt">
+): Medication {
+  const medications = getMedications();
+  const newMedication: Medication = {
+    ...medication,
+    id: generateId(),
+    createdAt: new Date().toISOString(),
+  };
+  medications.push(newMedication);
+  localStorage.setItem(MEDICATIONS_KEY, JSON.stringify(medications));
+  return newMedication;
+}
+
+export function updateMedication(
+  id: string,
+  updates: Partial<Omit<Medication, "id" | "createdAt">>
+): Medication | null {
+  const medications = getMedications();
+  const idx = medications.findIndex((m) => m.id === id);
+  if (idx === -1) return null;
+  medications[idx] = { ...medications[idx], ...updates };
+  localStorage.setItem(MEDICATIONS_KEY, JSON.stringify(medications));
+  return medications[idx];
+}
+
+export function deleteMedication(id: string): void {
+  const medications = getMedications().filter((m) => m.id !== id);
+  localStorage.setItem(MEDICATIONS_KEY, JSON.stringify(medications));
+}
+
+export function getMedicationsByDate(date: string): Medication[] {
+  return getMedications().filter((m) => m.date === date);
+}
+
+export function getTodayMedications(): Medication[] {
+  return getMedicationsByDate(getTodayISO());
 }
 
 // ── Statistics ────────────────────────────────────────────────────────────────

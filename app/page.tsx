@@ -9,15 +9,19 @@ import BodyMap from "@/components/BodyMap/BodyMap";
 import {
   getTodayPainRecords,
   getTodayActivities,
+  getTodayMedications,
   getPainRecords,
   getActivities,
 } from "@/lib/storage";
 import {
   PainRecord,
   Activity,
+  Medication,
   getPainColor,
   ACTIVITY_TYPE_LABELS,
   ACTIVITY_TYPE_ICONS,
+  MEDICATION_TYPE_LABELS,
+  MEDICATION_TYPE_ICONS,
 } from "@/lib/types";
 import { formatDate, getTodayISO } from "@/lib/utils";
 import {
@@ -26,12 +30,14 @@ import {
   BarChart3,
   Brain,
   Calendar,
+  Pill,
   Plus,
 } from "lucide-react";
 
 export default function HomePage() {
   const [todayPain, setTodayPain] = useState<PainRecord[]>([]);
   const [todayActivities, setTodayActivities] = useState<Activity[]>([]);
+  const [todayMedications, setTodayMedications] = useState<Medication[]>([]);
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalActivities, setTotalActivities] = useState(0);
   const [mounted, setMounted] = useState(false);
@@ -39,6 +45,7 @@ export default function HomePage() {
   useEffect(() => {
     setTodayPain(getTodayPainRecords());
     setTodayActivities(getTodayActivities());
+    setTodayMedications(getTodayMedications());
     setTotalRecords(getPainRecords().length);
     setTotalActivities(getActivities().length);
     setMounted(true);
@@ -103,12 +110,12 @@ export default function HomePage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-1">
-              <Calendar className="h-4 w-4 text-purple-500" />
+              <Pill className="h-4 w-4 text-green-600" />
               <span className="text-xs font-medium text-muted-foreground">
-                Total registros
+                Medicamentos hoy
               </span>
             </div>
-            <p className="text-2xl font-bold">{totalRecords}</p>
+            <p className="text-2xl font-bold">{todayMedications.length}</p>
           </CardContent>
         </Card>
       </div>
@@ -212,6 +219,41 @@ export default function HomePage() {
               ) : (
                 <p className="text-sm text-muted-foreground text-center py-3">
                   Sin actividades
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Today's medications */}
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base">Medicamentos de hoy</CardTitle>
+                <Link href="/registro">
+                  <Button variant="ghost" size="sm">
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Agregar
+                  </Button>
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {todayMedications.length > 0 ? (
+                <ul className="space-y-2">
+                  {todayMedications.map((m) => (
+                    <li key={m.id} className="flex items-center gap-2 text-sm py-1">
+                      <span>{MEDICATION_TYPE_ICONS[m.medicationType]}</span>
+                      <span className="flex-1">
+                        {MEDICATION_TYPE_LABELS[m.medicationType]}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {m.quantity} {m.quantity === 1 ? "unidad" : "unidades"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-3">
+                  Sin medicamentos
                 </p>
               )}
             </CardContent>

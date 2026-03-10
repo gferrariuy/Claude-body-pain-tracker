@@ -153,6 +153,39 @@ export const MUSCLE_NAMES: Record<string, string> = {
   "right-heel": "Talón derecho",
 };
 
+// ── Medications ───────────────────────────────────────────────────────────────
+
+export type MedicationType =
+  | "metadona"
+  | "tramadol"
+  | "relajante_muscular"
+  | "protector_gastrico";
+
+export interface Medication {
+  id: string;
+  date: string; // YYYY-MM-DD
+  medicationType: MedicationType;
+  quantity: number;
+  notes?: string;
+  createdAt: string; // ISO datetime
+}
+
+export const MEDICATION_TYPE_LABELS: Record<MedicationType, string> = {
+  metadona: "Metadona",
+  tramadol: "Tramadol",
+  relajante_muscular: "Relajante muscular",
+  protector_gastrico: "Protector gástrico",
+};
+
+export const MEDICATION_TYPE_ICONS: Record<MedicationType, string> = {
+  metadona: "💊",
+  tramadol: "💊",
+  relajante_muscular: "🩹",
+  protector_gastrico: "🛡️",
+};
+
+// ── Pain colors ────────────────────────────────────────────────────────────────
+
 export function getPainColor(intensity: number): string {
   if (intensity <= 2) return "#22c55e"; // green
   if (intensity <= 4) return "#eab308"; // yellow
