@@ -46,6 +46,7 @@ export default function MedicationCard({
     medicationType: MedicationType;
     quantity: number;
     notes?: string;
+    date?: string;
   }) {
     updateMedication(medication.id, data);
     toast.success("Medicamento actualizado");
@@ -135,6 +136,7 @@ export default function MedicationCard({
         initialMedicationType={medication.medicationType}
         initialQuantity={medication.quantity}
         initialNotes={medication.notes}
+        initialDate={medication.date}
         onSubmit={handleEdit}
         mode="edit"
       />

@@ -17,7 +17,7 @@ import {
   ACTIVITY_TYPE_LABELS,
   ACTIVITY_TYPE_ICONS,
 } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, getTodayISO } from "@/lib/utils";
 
 interface ActivityFormDialogProps {
   open: boolean;
@@ -26,11 +26,13 @@ interface ActivityFormDialogProps {
   initialCustomActivity?: string;
   initialDuration?: number;
   initialNotes?: string;
+  initialDate?: string;
   onSubmit: (data: {
     activityType: ActivityType;
     customActivity?: string;
     durationMinutes?: number;
     notes?: string;
+    date?: string;
   }) => void;
   mode?: "add" | "edit";
 }
@@ -42,6 +44,7 @@ export default function ActivityFormDialog({
   initialCustomActivity = "",
   initialDuration,
   initialNotes = "",
+  initialDate,
   onSubmit,
   mode = "add",
 }: ActivityFormDialogProps) {
@@ -51,6 +54,7 @@ export default function ActivityFormDialog({
     initialDuration ? String(initialDuration) : ""
   );
   const [notes, setNotes] = useState(initialNotes);
+  const [date, setDate] = useState(initialDate ?? getTodayISO());
 
   function handleSubmit() {
     onSubmit({
@@ -58,6 +62,7 @@ export default function ActivityFormDialog({
       customActivity: activityType === "otro" ? customActivity.trim() : undefined,
       durationMinutes: duration ? Number(duration) : undefined,
       notes: notes.trim() || undefined,
+      date,
     });
     onOpenChange(false);
   }
@@ -120,6 +125,20 @@ export default function ActivityFormDialog({
               onChange={(e) => setDuration(e.target.value)}
             />
           </div>
+
+          {/* Date (edit only) */}
+          {mode === "edit" && (
+            <div className="space-y-2">
+              <Label htmlFor="actDate">Fecha</Label>
+              <Input
+                id="actDate"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                max={getTodayISO()}
+              />
+            </div>
+          )}
 
           {/* Notes */}
           <div className="space-y-2">

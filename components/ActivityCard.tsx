@@ -44,6 +44,7 @@ export default function ActivityCard({ activity, onUpdate }: ActivityCardProps) 
     customActivity?: string;
     durationMinutes?: number;
     notes?: string;
+    date?: string;
   }) {
     updateActivity(activity.id, data);
     toast.success("Actividad actualizada");
@@ -136,6 +137,7 @@ export default function ActivityCard({ activity, onUpdate }: ActivityCardProps) 
         initialCustomActivity={activity.customActivity}
         initialDuration={activity.durationMinutes}
         initialNotes={activity.notes}
+        initialDate={activity.date}
         onSubmit={handleEdit}
         mode="edit"
       />

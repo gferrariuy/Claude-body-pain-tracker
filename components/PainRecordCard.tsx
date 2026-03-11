@@ -42,7 +42,7 @@ export default function PainRecordCard({ record, onUpdate }: PainRecordCardProps
     onUpdate();
   }
 
-  function handleEdit(data: { intensity: number; painType: PainType; notes?: string }) {
+  function handleEdit(data: { intensity: number; painType: PainType; notes?: string; date?: string }) {
     updatePainRecord(record.id, data);
     toast.success("Registro actualizado");
     onUpdate();
@@ -140,6 +140,7 @@ export default function PainRecordCard({ record, onUpdate }: PainRecordCardProps
         initialIntensity={record.intensity}
         initialPainType={record.painType}
         initialNotes={record.notes}
+        initialDate={record.date}
         onSubmit={handleEdit}
         mode="edit"
       />

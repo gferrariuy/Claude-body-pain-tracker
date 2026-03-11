@@ -26,7 +26,8 @@ import {
   getPainIntensityLabel,
 } from "@/lib/types";
 import { BodyView } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, getTodayISO } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 
 interface PainFormDialogProps {
   open: boolean;
@@ -37,10 +38,12 @@ interface PainFormDialogProps {
   initialIntensity?: number;
   initialPainType?: PainType;
   initialNotes?: string;
+  initialDate?: string;
   onSubmit: (data: {
     intensity: number;
     painType: PainType;
     notes?: string;
+    date?: string;
   }) => void;
   mode?: "add" | "edit";
 }
@@ -54,15 +57,17 @@ export default function PainFormDialog({
   initialIntensity = 5,
   initialPainType = "sordo",
   initialNotes = "",
+  initialDate,
   onSubmit,
   mode = "add",
 }: PainFormDialogProps) {
   const [intensity, setIntensity] = useState(initialIntensity);
   const [painType, setPainType] = useState<PainType>(initialPainType);
   const [notes, setNotes] = useState(initialNotes);
+  const [date, setDate] = useState(initialDate ?? getTodayISO());
 
   function handleSubmit() {
-    onSubmit({ intensity, painType, notes: notes.trim() || undefined });
+    onSubmit({ intensity, painType, notes: notes.trim() || undefined, date });
     onOpenChange(false);
   }
 
@@ -132,6 +137,20 @@ export default function PainFormDialog({
               ))}
             </div>
           </div>
+
+          {/* Date (edit only) */}
+          {mode === "edit" && (
+            <div className="space-y-2">
+              <Label htmlFor="date">Fecha</Label>
+              <Input
+                id="date"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                max={getTodayISO()}
+              />
+            </div>
+          )}
 
           {/* Notes */}
           <div className="space-y-2">

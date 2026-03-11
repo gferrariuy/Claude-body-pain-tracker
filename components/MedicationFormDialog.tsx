@@ -17,7 +17,7 @@ import {
   MEDICATION_TYPE_LABELS,
   MEDICATION_TYPE_ICONS,
 } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, getTodayISO } from "@/lib/utils";
 
 interface MedicationFormDialogProps {
   open: boolean;
@@ -25,10 +25,12 @@ interface MedicationFormDialogProps {
   initialMedicationType?: MedicationType;
   initialQuantity?: number;
   initialNotes?: string;
+  initialDate?: string;
   onSubmit: (data: {
     medicationType: MedicationType;
     quantity: number;
     notes?: string;
+    date?: string;
   }) => void;
   mode?: "add" | "edit";
 }
@@ -39,6 +41,7 @@ export default function MedicationFormDialog({
   initialMedicationType = "tramadol",
   initialQuantity = 1,
   initialNotes = "",
+  initialDate,
   onSubmit,
   mode = "add",
 }: MedicationFormDialogProps) {
@@ -46,6 +49,7 @@ export default function MedicationFormDialog({
     useState<MedicationType>(initialMedicationType);
   const [quantity, setQuantity] = useState<string>(String(initialQuantity));
   const [notes, setNotes] = useState(initialNotes);
+  const [date, setDate] = useState(initialDate ?? getTodayISO());
 
   function handleSubmit() {
     const qty = parseFloat(quantity);
@@ -54,6 +58,7 @@ export default function MedicationFormDialog({
       medicationType,
       quantity: qty,
       notes: notes.trim() || undefined,
+      date,
     });
     onOpenChange(false);
   }
@@ -111,6 +116,20 @@ export default function MedicationFormDialog({
               <span className="text-sm text-muted-foreground">unidades / comprimidos</span>
             </div>
           </div>
+
+          {/* Date (edit only) */}
+          {mode === "edit" && (
+            <div className="space-y-2">
+              <Label htmlFor="medDate">Fecha</Label>
+              <Input
+                id="medDate"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                max={getTodayISO()}
+              />
+            </div>
+          )}
 
           {/* Notes */}
           <div className="space-y-2">
