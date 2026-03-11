@@ -9,10 +9,11 @@ import { Separator } from "@/components/ui/separator";
 import PainRecordCard from "@/components/PainRecordCard";
 import ActivityCard from "@/components/ActivityCard";
 import MedicationCard from "@/components/MedicationCard";
-import { getPainRecords, getActivities, getMedications } from "@/lib/storage";
-import { PainRecord, Activity, Medication } from "@/lib/types";
+import SleepCard from "@/components/SleepCard";
+import { getPainRecords, getActivities, getMedications, getSleepRecords } from "@/lib/storage";
+import { PainRecord, Activity, Medication, SleepRecord } from "@/lib/types";
 import { formatDate, getTodayISO } from "@/lib/utils";
-import { Calendar, ChevronLeft, ChevronRight, AlertCircle, Activity as ActivityIcon, Pill } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, AlertCircle, Activity as ActivityIcon, Moon, Pill } from "lucide-react";
 import {
   format,
   parseISO,
@@ -29,6 +30,7 @@ export default function HistorialPage() {
   const [painRecords, setPainRecords] = useState<PainRecord[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [medications, setMedications] = useState<Medication[]>([]);
+  const [sleep, setSleep] = useState<SleepRecord[]>([]);
   const [allDatesWithData, setAllDatesWithData] = useState<Set<string>>(new Set());
   const [mounted, setMounted] = useState(false);
 
@@ -36,15 +38,18 @@ export default function HistorialPage() {
     const allPain = getPainRecords();
     const allActs = getActivities();
     const allMeds = getMedications();
+    const allSleep = getSleepRecords();
 
     setPainRecords(allPain.filter((r) => r.date === selectedDate));
     setActivities(allActs.filter((a) => a.date === selectedDate));
     setMedications(allMeds.filter((m) => m.date === selectedDate));
+    setSleep(allSleep.filter((s) => s.date === selectedDate));
 
     const datesSet = new Set([
       ...allPain.map((r) => r.date),
       ...allActs.map((a) => a.date),
       ...allMeds.map((m) => m.date),
+      ...allSleep.map((s) => s.date),
     ]);
     setAllDatesWithData(datesSet);
   }
@@ -71,7 +76,7 @@ export default function HistorialPage() {
   }
 
   const isToday = selectedDate === getTodayISO();
-  const hasData = painRecords.length > 0 || activities.length > 0 || medications.length > 0;
+  const hasData = painRecords.length > 0 || activities.length > 0 || medications.length > 0 || sleep.length > 0;
 
   // Build mini calendar for current month
   const monthStart = startOfMonth(parseISO(selectedDate));
@@ -186,6 +191,21 @@ export default function HistorialPage() {
             </Card>
           ) : (
             <>
+              {/* Sleep */}
+              {sleep.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                    <Moon className="h-3.5 w-3.5" />
+                    Sueño de anoche
+                  </h3>
+                  <div className="space-y-2">
+                    {sleep.map((s) => (
+                      <SleepCard key={s.id} record={s} onUpdate={loadData} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Pain records */}
               {painRecords.length > 0 && (
                 <div>

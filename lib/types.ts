@@ -184,6 +184,48 @@ export const MEDICATION_TYPE_ICONS: Record<MedicationType, string> = {
   protector_gastrico: "🛡️",
 };
 
+// ── Sleep quality ─────────────────────────────────────────────────────────────
+
+export type SleepQuality = "bueno" | "regular" | "malo";
+
+export interface SleepRecord {
+  id: string;
+  date: string; // YYYY-MM-DD (day the user wakes up)
+  sleepQuality: SleepQuality;
+  notes?: string;
+  createdAt: string; // ISO datetime
+}
+
+export const SLEEP_QUALITY_LABELS: Record<SleepQuality, string> = {
+  bueno: "Bueno",
+  regular: "Regular",
+  malo: "Malo",
+};
+
+export const SLEEP_QUALITY_ICONS: Record<SleepQuality, string> = {
+  bueno: "😴",
+  regular: "😐",
+  malo: "😫",
+};
+
+export const SLEEP_QUALITY_COLORS: Record<SleepQuality, string> = {
+  bueno: "text-green-700 bg-green-50 border-green-200",
+  regular: "text-yellow-700 bg-yellow-50 border-yellow-200",
+  malo: "text-red-700 bg-red-50 border-red-200",
+};
+
+export interface SleepPatternResult {
+  sleepQuality: SleepQuality;
+  muscleId: string;
+  muscleName: string;
+  totalSleepDays: number;
+  painOccurrencesAfter: number;
+  painOccurrencesBaseline: number;
+  correlationRate: number; // percentage
+  baselineRate: number; // percentage
+  lift: number; // how many times more likely
+}
+
 // ── Pain colors ────────────────────────────────────────────────────────────────
 
 export function getPainColor(intensity: number): string {

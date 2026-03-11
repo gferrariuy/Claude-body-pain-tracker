@@ -7,13 +7,17 @@ import BodyMap from "@/components/BodyMap/BodyMap";
 import PainFormDialog from "@/components/PainFormDialog";
 import ActivityFormDialog from "@/components/ActivityFormDialog";
 import MedicationFormDialog from "@/components/MedicationFormDialog";
+import SleepFormDialog from "@/components/SleepFormDialog";
 import PainRecordCard from "@/components/PainRecordCard";
 import ActivityCard from "@/components/ActivityCard";
 import MedicationCard from "@/components/MedicationCard";
+import SleepCard from "@/components/SleepCard";
 import {
   PainRecord,
   Activity,
   Medication,
+  SleepRecord,
+  SleepQuality,
   PainType,
   ActivityType,
   MedicationType,
@@ -22,12 +26,14 @@ import {
   getTodayPainRecords,
   getTodayActivities,
   getTodayMedications,
+  getTodaySleep,
   savePainRecord,
   saveActivity,
   saveMedication,
+  saveSleepRecord,
 } from "@/lib/storage";
 import { formatDate, getTodayISO } from "@/lib/utils";
-import { Activity as ActivityIcon, AlertCircle, Pill, Plus } from "lucide-react";
+import { Activity as ActivityIcon, AlertCircle, Moon, Pill, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 interface PendingPain {
@@ -40,15 +46,18 @@ export default function RegistroPage() {
   const [painRecords, setPainRecords] = useState<PainRecord[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [medications, setMedications] = useState<Medication[]>([]);
+  const [sleep, setSleep] = useState<SleepRecord[]>([]);
   const [pendingPain, setPendingPain] = useState<PendingPain | null>(null);
   const [activityDialogOpen, setActivityDialogOpen] = useState(false);
   const [medicationDialogOpen, setMedicationDialogOpen] = useState(false);
+  const [sleepDialogOpen, setSleepDialogOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   function refresh() {
     setPainRecords(getTodayPainRecords());
     setActivities(getTodayActivities());
     setMedications(getTodayMedications());
+    setSleep(getTodaySleep());
   }
 
   useEffect(() => {
@@ -96,6 +105,13 @@ export default function RegistroPage() {
     saveMedication({ date: getTodayISO(), ...data });
     toast.success("Medicamento registrado");
     setMedicationDialogOpen(false);
+    refresh();
+  }
+
+  function handleSleepSubmit(data: { sleepQuality: SleepQuality; notes?: string }) {
+    saveSleepRecord({ date: getTodayISO(), ...data });
+    toast.success("Sueño registrado");
+    setSleepDialogOpen(false);
     refresh();
   }
 
@@ -212,6 +228,39 @@ export default function RegistroPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Sleep */}
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                  <Moon className="h-3.5 w-3.5" />
+                  Sueño de anoche
+                </CardTitle>
+                {sleep.length === 0 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setSleepDialogOpen(true)}
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1" />
+                    Registrar
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {sleep.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No has registrado la calidad del sueño
+                </p>
+              ) : (
+                sleep.map((s) => (
+                  <SleepCard key={s.id} record={s} onUpdate={refresh} />
+                ))
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
 
@@ -239,6 +288,13 @@ export default function RegistroPage() {
         open={medicationDialogOpen}
         onOpenChange={setMedicationDialogOpen}
         onSubmit={handleMedicationSubmit}
+      />
+
+      {/* Sleep form dialog */}
+      <SleepFormDialog
+        open={sleepDialogOpen}
+        onOpenChange={setSleepDialogOpen}
+        onSubmit={handleSleepSubmit}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { PainRecord, Activity, Medication } from "./types";
+import { PainRecord, Activity, Medication, SleepRecord } from "./types";
 import { generateId, getTodayISO } from "./utils";
 
 const PAIN_RECORDS_KEY = "pain-tracker:pain-records";
@@ -161,6 +161,59 @@ export function getTodayMedications(): Medication[] {
   return getMedicationsByDate(getTodayISO());
 }
 
+// ── Sleep Records ─────────────────────────────────────────────────────────────
+
+const SLEEP_KEY = "pain-tracker:sleep";
+
+export function getSleepRecords(): SleepRecord[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const data = localStorage.getItem(SLEEP_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveSleepRecord(
+  record: Omit<SleepRecord, "id" | "createdAt">
+): SleepRecord {
+  const records = getSleepRecords();
+  const newRecord: SleepRecord = {
+    ...record,
+    id: generateId(),
+    createdAt: new Date().toISOString(),
+  };
+  records.push(newRecord);
+  localStorage.setItem(SLEEP_KEY, JSON.stringify(records));
+  return newRecord;
+}
+
+export function updateSleepRecord(
+  id: string,
+  updates: Partial<Omit<SleepRecord, "id" | "createdAt">>
+): SleepRecord | null {
+  const records = getSleepRecords();
+  const idx = records.findIndex((r) => r.id === id);
+  if (idx === -1) return null;
+  records[idx] = { ...records[idx], ...updates };
+  localStorage.setItem(SLEEP_KEY, JSON.stringify(records));
+  return records[idx];
+}
+
+export function deleteSleepRecord(id: string): void {
+  const records = getSleepRecords().filter((r) => r.id !== id);
+  localStorage.setItem(SLEEP_KEY, JSON.stringify(records));
+}
+
+export function getSleepByDate(date: string): SleepRecord[] {
+  return getSleepRecords().filter((r) => r.date === date);
+}
+
+export function getTodaySleep(): SleepRecord[] {
+  return getSleepByDate(getTodayISO());
+}
+
 // ── Statistics ────────────────────────────────────────────────────────────────
 
 export interface MuscleStats {
@@ -232,7 +285,7 @@ export function getDailyPainSummary(from: string, to: string): DailyPainSummary[
 
 // ── Patterns ──────────────────────────────────────────────────────────────────
 
-import { PatternResult, ACTIVITY_TYPE_LABELS } from "./types";
+import { PatternResult, ACTIVITY_TYPE_LABELS, SleepPatternResult, SleepQuality } from "./types";
 import { getDatesAfter } from "./utils";
 
 export function detectPatterns(windowDays = 2): PatternResult[] {
@@ -299,6 +352,81 @@ export function detectPatterns(windowDays = 2): PatternResult[] {
           muscleId,
           muscleName: name,
           totalActivityDays: actDates.length,
+          painOccurrencesAfter: count,
+          painOccurrencesBaseline: baselineCount,
+          correlationRate: Math.min(rateAfter, 100),
+          baselineRate: Math.min(rateBaseline, 100),
+          lift,
+        });
+      }
+    }
+  }
+
+  return results.sort((a, b) => b.lift - a.lift);
+}
+
+export function detectSleepPatterns(windowDays = 2): SleepPatternResult[] {
+  const allRecords = getPainRecords();
+  const allSleep = getSleepRecords();
+
+  if (allSleep.length === 0 || allRecords.length === 0) return [];
+
+  const qualityTypesSet = new Set(allSleep.map((s) => s.sleepQuality));
+  const qualityTypes = Array.from(qualityTypesSet) as SleepQuality[];
+
+  const results: SleepPatternResult[] = [];
+
+  for (const quality of qualityTypes) {
+    const sleepDates = allSleep
+      .filter((s) => s.sleepQuality === quality)
+      .map((s) => s.date);
+
+    if (sleepDates.length < 2) continue;
+
+    // Dates within window days after (and including) any sleep record of this quality
+    const afterDates = new Set<string>();
+    for (const d of sleepDates) {
+      afterDates.add(d);
+      for (const next of getDatesAfter(d, windowDays)) {
+        afterDates.add(next);
+      }
+    }
+
+    const recordsAfter = allRecords.filter((r) => afterDates.has(r.date));
+    const recordsBaseline = allRecords.filter((r) => !afterDates.has(r.date));
+
+    const afterDaysCount = afterDates.size;
+    const allDates = new Set(allRecords.map((r) => r.date));
+    const baselineDaysCount = Math.max(
+      Array.from(allDates).filter((d) => !afterDates.has(d)).length,
+      1
+    );
+
+    const musclesAfter: Record<string, { count: number; name: string }> = {};
+    for (const r of recordsAfter) {
+      if (!musclesAfter[r.muscleId]) {
+        musclesAfter[r.muscleId] = { count: 0, name: r.muscleName };
+      }
+      musclesAfter[r.muscleId].count++;
+    }
+
+    const musclesBaseline: Record<string, number> = {};
+    for (const r of recordsBaseline) {
+      musclesBaseline[r.muscleId] = (musclesBaseline[r.muscleId] || 0) + 1;
+    }
+
+    for (const [muscleId, { count, name }] of Object.entries(musclesAfter)) {
+      const rateAfter = (count / afterDaysCount) * 100;
+      const baselineCount = musclesBaseline[muscleId] || 0;
+      const rateBaseline = (baselineCount / baselineDaysCount) * 100;
+      const lift = rateBaseline > 0 ? rateAfter / rateBaseline : rateAfter > 0 ? 999 : 1;
+
+      if (lift >= 1.5 && count >= 2) {
+        results.push({
+          sleepQuality: quality,
+          muscleId,
+          muscleName: name,
+          totalSleepDays: sleepDates.length,
           painOccurrencesAfter: count,
           painOccurrencesBaseline: baselineCount,
           correlationRate: Math.min(rateAfter, 100),
